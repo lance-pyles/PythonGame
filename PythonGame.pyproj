@@ -21,9 +21,12 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="direction.py" />
     <Compile Include="main.py" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="tile0101.png" />
+    <Content Include="tile125.png" />
     <Content Include="trees.png" />
     <Content Include="tile004.png" />
     <Content Include="tile005.png" />

@@ -7,6 +7,8 @@ import time
 import asyncio
 from datetime import datetime
 from datetime import timedelta
+
+from direction import Direction
 #import datetime
 
 cell_size: int = 32
@@ -36,10 +38,12 @@ datetime_object = datetime.today()
 
 class game_object():
      
-     def __init__(self, width, height):
+     def __init__(self, width, height, column, row):
      
           self.width = width          
           self.height = height
+          self.column = column
+          self.row = row
 
 class cursor():
      
@@ -60,7 +64,7 @@ class cursor():
          return (int)(self.y / cell_size) + 1 if self.x > 1 else -1
      
 class player():
-     
+     has_moved_on_map: bool
      walk_count = 0
 
      old_column: int = -1
@@ -73,6 +77,7 @@ class player():
      width = 16
      height = 16
      current_sprite = __walkDown[0]
+     direction: Direction =  Direction.DOWN
      
      def __init__(self, column, row):
      
@@ -80,45 +85,52 @@ class player():
           self.row = row
      
      def moveUp(self, game_map):
+          self.current_sprite = self.__walkUp[self.walk_count % 7]
+          self.direction = Direction.UP
           new_row =  max(self.row - 1, 1)
           if 1 == 1:
-               if game_map[new_row - 1][self.column - 1] in ('G', 'D'):
+               if game_map[new_row - 1][self.column - 1] in ('G', 'D', 'I'):
                     if new_row != self.row:
                          self.old_row = self.row
                          self.row = new_row
                          self.walk_count = self.walk_count + 1 #if self.walk_count < 7 else 0
-                         self.current_sprite = self.__walkUp[self.walk_count % 7]
+                         self.has_moved_on_map = True
                     
      def moveRight(self, game_map):
+          self.current_sprite = self.__walkRight[self.walk_count % 7]
+          self.direction = Direction.RIGHT
           new_column = min(self.column + 1, game_columns)
           if 1 == 1:
-               if game_map[self.row - 1][new_column - 1] in ('G', 'D'):
+               if game_map[self.row - 1][new_column - 1] in ('G', 'I'):
                     if new_column != self.column:
                          self.old_column = self.column
                          self.column = new_column
                          self.walk_count = self.walk_count + 1 #if self.walk_count < 7 else 0
-                         self.current_sprite = self.__walkRight[self.walk_count % 7]
+                         self.has_moved_on_map = True
                     
      def moveDown(self, game_map):
+          self.current_sprite = self.__walkDown[self.walk_count % 7]
+          self.direction = Direction.DOWN
           new_row = min(self.row + 1, game_rows)
           if 1 == 1:
-               if game_map[new_row - 1][self.column - 1] in ('G', 'D'):
+               if game_map[new_row - 1][self.column - 1] in ('G', 'I', 'X'):
                     if new_row != self.row:
                          self.old_row = self.row
                          self.row = new_row
                          self.walk_count = self.walk_count + 1 #if self.walk_count < 7 else 0
-                         self.current_sprite = self.__walkDown[self.walk_count % 7]
+                         self.has_moved_on_map = True
                     
      def moveLeft(self, game_map):
-          
+          self.current_sprite = self.__walkLeft[self.walk_count % 7]
+          self.direction = Direction.LEFT
           new_column = max(self.column - 1, 1)
           if 1 == 1:
-               if game_map[self.row - 1][new_column - 1] in ('G', 'D'):
+               if game_map[self.row - 1][new_column - 1] in ('G', 'I'):
                     if new_column != self.column:
                          self.old_column = self.column
                          self.column = new_column
                          self.walk_count = self.walk_count + 1 #if self.walk_count < 7 else 0
-                         self.current_sprite = self.__walkLeft[self.walk_count % 7]
+                         self.has_moved_on_map = True
 
      @property
      def x(self): 
@@ -153,7 +165,9 @@ def draw_frame(screen, fox: player, display_title: bool, pointer: cursor, night:
               pygame.image.load('house_front_right.png')]
      
      door = pygame.image.load('house_front_center.png')
-     
+     house_inside = pygame.image.load('tile125.png')
+     house_exit = pygame.image.load('tile0101.png')
+     rotated_image = pygame.transform.rotate(house_exit, 180)
      for row in range(0, len(map)):
           for column in range(0, len(map[0])):
 
@@ -166,8 +180,10 @@ def draw_frame(screen, fox: player, display_title: bool, pointer: cursor, night:
                     house.remove(house[0])
                elif map[row][column] == 'D':
                     screen.blit(door, (cell_size * column, cell_size * row))
-
-
+               elif map[row][column] == 'I':
+                    screen.blit(house_inside, (cell_size * column, cell_size * row))
+               elif map[row][column] == 'X':
+                    screen.blit(rotated_image, (cell_size * column, cell_size * row))
      if pygame.mouse.get_focused():
 
           #draw mouse
@@ -237,6 +253,9 @@ def draw_frame(screen, fox: player, display_title: bool, pointer: cursor, night:
           txtPlayerRow = font.render(f'row:{fox.row}; old row:{fox.old_row if fox.old_row != -1 else "-"}', True, (244, 0, 0))
           screen.blit(txtPlayerRow, (cell_size * 13, cell_size * 20))
 
+          txtPlayerDirection = font.render(f'direction:{fox.direction}', True, (244, 0, 0))
+          screen.blit(txtPlayerDirection, (cell_size * 17, cell_size * 20))
+
           txtMouseRow = font.render(f'row:{pointer.row if pointer.row != -1 else "-"}', True, (244, 0, 0))
           screen.blit(txtMouseRow, (cell_size * 13, cell_size * 21))
      
@@ -273,14 +292,14 @@ def draw_frame(screen, fox: player, display_title: bool, pointer: cursor, night:
 # Create a clock object
 clock = pygame.time.Clock()
 
-def createMap():
+def createMap(house: game_object):
      
      percent_trees: int = 1
      print('Creating map.')
      print(f'Using {percent_trees}% trees.')
      rows, cols = (20, 20)
      arr = [['l' for i in range(0, cols)] for j in range(0, rows)]
-     house: game_object = game_object(2, 3)
+
      for row in range(0, len(arr)):
           
           for column in range(0, len(arr[0])):
@@ -291,21 +310,52 @@ def createMap():
      arr[1][1] = 'G'        
      #place house
      #TODO: update so it cannot spawn over objects or debug row or close enough to debug row that you cannot enter
-     col_rand = random.randrange(1, game_columns - house.width)
-     row_rand = random.randrange(1, game_rows - house.height)
+
+     
      for row in range(0, 2):
           for col in range(0, 3):
      
-               arr[row_rand + row][col_rand + col] = 'H'
+               arr[house.row + row][house.column + col] = 'H'
                if row == 1 and col == 1:
-                    arr[row_rand + row][col_rand + col] = 'D'
+                    arr[house.row + row][house.column + col] = 'D'
      print('Map created.')      
      for x in arr:
 
           print(x)
           
      return arr
+def createMapInside(house: game_object):
+     
 
+     print('Creating map.')
+     #print(f'Using {percent_trees}% trees.')
+     rows, cols = (20, 20)
+     arr = [['l' for i in range(0, cols)] for j in range(0, rows)]
+     #house: game_object = game_object(2, 3)
+     for row in range(0, len(arr)):
+          
+          for column in range(0, len(arr[0])):
+
+               arr[row][column] = 'I'
+     
+     #no trees where the fox spawns
+     arr[house.row + 1][house.column + 1] = 'X'        
+     #place house
+     #TODO: update so it cannot spawn over objects or debug row or close enough to debug row that you cannot enter
+    # col_rand = random.randrange(1, game_columns - house.width)
+     #row_rand = random.randrange(1, game_rows - house.height)
+     #for row in range(0, 2):
+         # for col in range(0, 3):
+     
+              # arr[row_rand + row][col_rand + col] = 'H'
+              # if row == 1 and col == 1:
+                   # arr[row_rand + row][col_rand + col] = 'D'
+     print('Map created.')      
+     for x in arr:
+
+          print(x)
+          
+     return arr
 async def main():
 
      global debug
@@ -326,9 +376,12 @@ async def main():
      fox: player = player(2, 2)
      pointer: cursor = cursor()
      night: bool = True if datetime_object.hour >= 10 and datetime_object.hour <= 6 else False
+     house: game_object = game_object(2, 3, random.randint(1, game_columns - 3), random.randint(1, game_rows - 2))
      
-     game_map = createMap()
-
+     game_map = createMap(house)
+     house_map = createMapInside(house)
+     currentMap = game_map
+     
     # level_in_progress: bool = True
      time_elapsed_since_last_action: int = 0
      # Run until the user asks to quit
@@ -372,19 +425,26 @@ async def main():
                keys = pygame.key.get_pressed()
                
                if keys[pygame.K_LEFT]:                    
-                    fox.moveLeft(game_map)
+                    fox.moveLeft(currentMap)
                          
                if keys[pygame.K_RIGHT]:       
-                    fox.moveRight(game_map)
+                    fox.moveRight(currentMap)
 
                if keys[pygame.K_UP]:
-                    fox.moveUp(game_map)
+                    fox.moveUp(currentMap)
                     
 
                if keys[pygame.K_DOWN]:
-                    fox.moveDown(game_map)
- 
-          draw_frame(screen, fox, display_title, pointer, night, game_map)
+                    fox.moveDown(currentMap)
+                    
+          if currentMap[fox.row - 1][fox.column - 1] in ('D') and fox.has_moved_on_map:
+               currentMap = house_map
+               fox.has_moved_on_map = False
+          elif currentMap[fox.row - 1][fox.column - 1] in ('X') and fox.has_moved_on_map:
+               currentMap = game_map
+               fox.has_moved_on_map = False
+               
+          draw_frame(screen, fox, display_title, pointer, night, currentMap)
 
           await asyncio.sleep(0)  # This line is critical; ensure you keep the sleep time at 0
 
