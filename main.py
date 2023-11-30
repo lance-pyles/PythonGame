@@ -89,7 +89,7 @@ class player():
           self.direction = Direction.UP
           new_row =  max(self.row - 1, 1)
           if 1 == 1:
-               if game_map[new_row - 1][self.column - 1] in ('G', 'D', 'I'):
+               if game_map[new_row - 1][self.column - 1] in ('G', 'I', 'D') and not game_map[self.row - 1][self.column - 1] in ('D'):
                     if new_row != self.row:
                          self.old_row = self.row
                          self.row = new_row
@@ -101,7 +101,7 @@ class player():
           self.direction = Direction.RIGHT
           new_column = min(self.column + 1, game_columns)
           if 1 == 1:
-               if game_map[self.row - 1][new_column - 1] in ('G', 'I'):
+               if game_map[self.row - 1][new_column - 1] in ('G', 'I') and not game_map[self.row - 1][self.column - 1] in ('X', 'D'):
                     if new_column != self.column:
                          self.old_column = self.column
                          self.column = new_column
@@ -113,7 +113,7 @@ class player():
           self.direction = Direction.DOWN
           new_row = min(self.row + 1, game_rows)
           if 1 == 1:
-               if game_map[new_row - 1][self.column - 1] in ('G', 'I', 'X'):
+               if game_map[new_row - 1][self.column - 1] in ('G', 'I', 'X') and not game_map[self.row - 1][self.column - 1] in ('X'):
                     if new_row != self.row:
                          self.old_row = self.row
                          self.row = new_row
@@ -125,7 +125,7 @@ class player():
           self.direction = Direction.LEFT
           new_column = max(self.column - 1, 1)
           if 1 == 1:
-               if game_map[self.row - 1][new_column - 1] in ('G', 'I'):
+               if game_map[self.row - 1][new_column - 1] in ('G', 'I') and not game_map[self.row - 1][self.column - 1] in ('X', 'D'):
                     if new_column != self.column:
                          self.old_column = self.column
                          self.column = new_column
@@ -307,7 +307,11 @@ def createMap(house: game_object):
                arr[row][column] = 'G' if random.randint(1, 100) > percent_trees else 'T'
      
      #no trees where the fox spawns
-     arr[1][1] = 'G'        
+     arr[1][1] = 'G'      
+     
+     #no trees where the door is
+     arr[house.row + 2][house.column + 1] = 'G'     
+     
      #place house
      #TODO: update so it cannot spawn over objects or debug row or close enough to debug row that you cannot enter
 
