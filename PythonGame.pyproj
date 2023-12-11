@@ -25,14 +25,14 @@
     <Compile Include="main.py" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="tile0101.png" />
-    <Content Include="tile125.png" />
+    <Content Include="house_door.png" />
+    <Content Include="house_floor.png" />
     <Content Include="trees.png" />
-    <Content Include="tile004.png" />
-    <Content Include="tile005.png" />
-    <Content Include="tile006.png" />
-    <Content Include="tile007.png" />
-    <Content Include="tile008.png" />
+    <Content Include="foxDown1.png" />
+    <Content Include="foxDown2.png" />
+    <Content Include="foxDown3.png" />
+    <Content Include="foxDown4.png" />
+    <Content Include="foxDown5.png" />
     <Content Include="tile009.png" />
     <Content Include="tile010.png" />
     <Content Include="tile011.png" />
@@ -67,7 +67,6 @@
     <Content Include="house_front_center.png" />
     <Content Include="house_front_left.png" />
     <Content Include="house_front_right.png" />
-    <Content Include="tile093.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
